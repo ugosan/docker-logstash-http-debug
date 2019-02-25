@@ -1,0 +1,1 @@
+# docker-logstash-http-debug
