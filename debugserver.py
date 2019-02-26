@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pygments import highlight, lexers, formatters
 import time
 import json
 
@@ -17,9 +18,10 @@ class MyServer(BaseHTTPRequestHandler):
         content_len = int(self.headers['content-length'])
         post_body = self.rfile.read(content_len).decode('utf-8')
 
-        print(json.dumps(json.loads(post_body), indent=2, sort_keys=True))
+        formatted_json = json.dumps(json.loads(post_body), indent=2, sort_keys=True)
+        colorful_json = highlight(formatted_json, lexers.JsonLexer(), formatters.TerminalFormatter())
+        print(colorful_json)
         
-
 myServer = HTTPServer((hostName, hostPort), MyServer)
 print(time.asctime(), "Server Starts - %s:%s" % (hostName, hostPort))
 

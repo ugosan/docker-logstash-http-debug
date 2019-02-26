@@ -1,6 +1,10 @@
 FROM python:3
 
 COPY ./debugserver.py /debugserver.py
+COPY ./requirements.txt /requirements.txt
+
+
+RUN pip install -r requirements.txt
 
 EXPOSE 9000
 
