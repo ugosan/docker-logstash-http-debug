@@ -1,0 +1,25 @@
+{
+  "name": "docker-logstash-http-debug",
+  "version": "1.0.0",
+  "description": "an debuger for logstash output",
+  "main": "ui.js",
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "pygments": "^0.2.1",
+    "ws": "^7.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ugosan/docker-logstash-http-debug.git"
+  },
+  "author": "Ugo Sangiorgi <ugo.sangiorgi@elastic.co>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ugosan/docker-logstash-http-debug/issues"
+  },
+  "homepage": "https://github.com/ugosan/docker-logstash-http-debug#readme"
+}

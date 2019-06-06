@@ -1,4 +1,11 @@
 var http = require('http');
+var WebSocketServer = require('ws').Server;
+var WebSocket = require('ws');
+
+var wss = new WebSocketServer({
+    port: 8081
+});
+
 var server = http.createServer(function (req, res) {
 
     console.info(req.method);
@@ -8,8 +15,15 @@ var server = http.createServer(function (req, res) {
             body += chunk.toString(); // convert Buffer to string
         });
         req.on('end', () => {
+
             console.log(body);
+            wss.clients.forEach(function each(client) {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(body);
+                }
+            });
             res.end('ok');
+
         });
     }
 
