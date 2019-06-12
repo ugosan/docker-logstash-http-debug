@@ -1,12 +1,8 @@
-FROM jfloff/alpine-python:3.6
+FROM node:alpine
 
-COPY ./debugserver.py /debugserver.py
-COPY ./requirements.txt /requirements.txt
+COPY package.json package.json  
+RUN npm install
 
-RUN pip install -r requirements.txt
-
-EXPOSE 9000
-
-ENV PYTHONUNBUFFERED=1
-
-CMD [ "python", "debugserver.py" ]
+# Add your source files
+COPY . .  
+CMD ["node","webserver.js"]  

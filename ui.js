@@ -1,8 +1,12 @@
-var highlight = require('pygments').colorize;
 var WebSocket = require('ws');
 
 var blessed = require('blessed'),
     screen;
+var hljs = require('highlight.js');
+var h2c = require('highlight.js-console'); 
+
+
+var messages = [];
 
 screen = blessed.screen({
     //dump: __dirname + '/log.txt',
@@ -79,18 +83,9 @@ logger.select(0);
 
 logger.on('keypress', function (ch, key) {
     if (key.name === 'up' || key.name === 'down') {
-
-        var content = {
-            "time": Math.random(),
-            "string": "this is a long string",
-            "object": {
-                "one": 1,
-                "two": 2.2
-            }
-        };
-
-        content['index'] = logger.getScroll();
-        topright.content = JSON.stringify(content, null, 2);
+        var hlText = hl2c.highlightAuto(JSON.stringify(messages[logger.getScroll()], null, 2));
+        
+        topright.content = hlText;
 
         /*highlight(JSON.stringify(content, null, 2), 'json', 'console', function(data) {
             topright.content = data;
@@ -100,18 +95,8 @@ logger.on('keypress', function (ch, key) {
 });
 
 logger.on('select', function () {
-    var content = {
-        "time": Math.random(),
-        "string": "this is a long string",
-        "object": {
-            "one": 1,
-            "two": 2.2
-        }
-    };
-    topright.content = JSON.stringify(content, null, 2);
-    /*highlight(JSON.stringify(content, null, 2), 'json', 'console', function(data) {
-        topright.content = data;
-      });*/
+    topright.content = JSON.stringify(messages[logger.getScroll()], null, 2);
+
 });
 
 screen.append(topright);
@@ -120,7 +105,13 @@ screen.append(title);
 
 screen.key('q', function () {
     ws.close();
+    process.exit(0);
     return screen.destroy();
+});
+
+process.on('SIGTERM', function () {
+    console.info("Shutting down UI");
+    process.exit(0);
 });
 
 const ws = new WebSocket('ws://localhost:8081');
@@ -136,8 +127,14 @@ ws.on('close', function open() {
 });
 
 ws.on('message', function incoming(message) {
-    logger.add("" + message);
-    screen.render();
+    const jsonmessage = JSON.parse(message);
+    logger.add(jsonmessage["@timestamp"]||"event");
+    messages.push(message);
 });
+
+setInterval(function(){
+    screen.render();
+}, 200);
+
 
 screen.render();

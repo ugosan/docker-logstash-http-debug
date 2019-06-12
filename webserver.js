@@ -8,7 +8,7 @@ var wss = new WebSocketServer({
 
 var server = http.createServer(function (req, res) {
 
-    console.info(req.method);
+    //console.info(req.method);
     if (req.method == 'POST') {
         let body = '';
         req.on('data', chunk => {
@@ -16,7 +16,7 @@ var server = http.createServer(function (req, res) {
         });
         req.on('end', () => {
 
-            console.log(body);
+            //console.log(body);
             wss.clients.forEach(function each(client) {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(body);

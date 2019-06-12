@@ -5,7 +5,7 @@
   "main": "ui.js",
   "dependencies": {
     "blessed": "^0.1.81",
-    "pygments": "^0.2.1",
+    "highlight.js-console": "^1.0.0",
     "ws": "^7.0.0"
   },
   "devDependencies": {},
