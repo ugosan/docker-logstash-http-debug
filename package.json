@@ -1,11 +1,13 @@
 {
   "name": "docker-logstash-http-debug",
   "version": "1.0.0",
-  "description": "an debuger for logstash output",
+  "description": "A debuger for logstash output",
   "main": "ui.js",
   "dependencies": {
     "blessed": "^0.1.81",
-    "highlight.js-console": "^1.0.0",
+    "chalk": "^2.4.2",
+    "colors": "^1.3.3",
+    "emphasize": "^2.1.0",
     "ws": "^7.0.0"
   },
   "devDependencies": {},
