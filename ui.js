@@ -35,13 +35,13 @@ var message_list = blessed.list({
     scrollback: 100,
     style: {
         selected: {
-            bg: 'yellow'
+            bg: 'red'
         }
     },
     scrollbar: {
         ch: ' ',
         track: {
-            bg: 'yellow'
+            bg: 'red'
         },
         style: {
             inverse: true

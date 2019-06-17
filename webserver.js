@@ -38,3 +38,16 @@ var server = http.createServer(function (req, res) {
 });
 server.listen(9000);
 console.log('Server is accepting messages on port 9000');
+
+process.on('SIGTERM', function () {
+    console.info("\nShutting down Webserver...");
+    server.close();
+    process.exit(0);
+});
+
+
+process.on('SIGINT', function () {
+    console.info("\nShutting down webserver...");
+    server.close();
+    process.exit(0);
+});
