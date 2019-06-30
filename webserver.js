@@ -8,15 +8,13 @@ var wss = new WebSocketServer({
 
 var server = http.createServer(function (req, res) {
 
-    //console.info(req.method);
     if (req.method == 'POST') {
         let body = '';
         req.on('data', chunk => {
-            body += chunk.toString(); // convert Buffer to string
+            body += chunk.toString(); 
         });
         req.on('end', () => {
 
-            //console.log(body);
             wss.clients.forEach(function each(client) {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(body);
@@ -44,7 +42,6 @@ process.on('SIGTERM', function () {
     server.close();
     process.exit(0);
 });
-
 
 process.on('SIGINT', function () {
     console.info("\nShutting down webserver...");
