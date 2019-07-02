@@ -35,7 +35,7 @@ var message_list = blessed.list({
     top: 0,
     left: 'left',
     width: '20%',
-    height: '90%',
+    height: '100%-4',
     border: 'line',
     tags: true,
     keys: true,
@@ -74,14 +74,14 @@ var progress = blessed.progressbar({
     width: '20%',
     height: 3,
     left: 0,
-    top: '90%-4',
+    bottom: 1,
     filled: 0
 });
 
 var stats = blessed.box({
     label: 'Stats',
     border: 'line',
-    top: '90%',
+    bottom: 1,
     left: '20%',
     width: '80%',
     height: 3,
@@ -109,13 +109,13 @@ var footer = blessed.box({
     }
 });
 
-footer.append(progress);
+//footer.append(progress);
 
 var commands = blessed.Text({
     left: 0,
     top: 0,
     tags: true,
-    content: '{bold}q{/bold}uit | {bold}c{/bold}lear events | {bold}s{/bold}ettings',
+    content: '{bold}q{/bold}uit | {bold}c{/bold}lear events | {bold}r{/bold}eset stats | {bold}s{/bold}ettings',
 });
 var ws_connected = blessed.Text({
     right: 1,
@@ -131,7 +131,7 @@ var message_viewer = blessed.box({
     left: '20%',
     top: 0,
     width: '80%',
-    height: '90%',
+    height: '100%-4',
     border: {
         type: 'line',
         left: true,
@@ -176,11 +176,7 @@ var update_progress = function () {
 message_list.on('keypress', function (ch, key) {
     if (key.name === 'up' || key.name === 'down') {
         show_message(message_list.getScroll());
-    } else if (key.name === 'c') {
-        message_list.clearItems();
-        messages = [];
-        message_viewer.content = "";
-    }
+    } 
 });
 
 message_list.on('select', function () {
@@ -194,28 +190,9 @@ message_list.on('click', function () {
 screen.append(message_list);
 screen.append(message_viewer);
 screen.append(stats);
+screen.append(progress);
 screen.append(footer);
 
-screen.key('q', function () {
-    ws.close();
-    process.exit(0);
-    return screen.destroy();
-});
-
-screen.key('t', function () {
-    var test_message = {
-        "@timestamp": new Date().toISOString(),
-        "foo": "bar",
-        "blah": {
-            "aaa": "bbb",
-            "cccc": "DDD"
-        },
-        "number": 400,
-        "floating": 4.555
-    }
-
-    add_message(JSON.stringify(test_message));
-});
 
 var prompt = blessed.box({
     parent: screen,
@@ -277,8 +254,49 @@ blessed.textbox({
 
 screen.key('s', function () {
     prompt.hidden = !prompt.hidden;
-    if (!prompt.hidden) prompt.focus();
+    if (prompt.hidden){
+        message_list.focus();
+    }else{
+        prompt.focus();
+    }
 });
+
+screen.key('r', function () {
+    message_count = 0;
+    message_length_avg = 0;
+    messages_per_second = 0;
+    message_count_t0 = 0;
+});
+
+screen.key('c', function(){
+    message_list.clearItems();
+    messages = [];
+    message_viewer.content = "";
+});
+
+screen.key('q', function () {
+    ws.close();
+    process.exit(0);
+    return screen.destroy();
+});
+
+screen.key('t', function () {
+    var test_message = {
+        "@timestamp": new Date().toISOString(),
+        "foo": "bar",
+        "blah": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "number": 400,
+        "floating": 4.555
+    }
+
+    add_message(JSON.stringify(test_message));
+});
+
+
+
 
 process.on('SIGTERM', function () {
     console.info("Shutting down UI");
@@ -320,7 +338,6 @@ ws.on('message', function incoming(message) {
 
 setInterval(function () {
     screen.render();
-    
 }, 300);
 
 setInterval(function(){
