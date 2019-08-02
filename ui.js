@@ -5,6 +5,7 @@ var blessed = require('blessed'),
 
 var emphasize = require('emphasize')
 var chalk = require('chalk')
+
 var messages = [];
 
 const color_config = {
@@ -12,6 +13,8 @@ const color_config = {
     'string': chalk.white,
     'number': chalk.magenta
 }
+
+
 
 const MAX_MESSAGES = 100;
 
@@ -70,7 +73,7 @@ var progress = blessed.progressbar({
             bg: 'default'
         }
     },
-    ch: '█',
+    ch: ':',
     width: '20%',
     height: 3,
     left: 0,
@@ -126,7 +129,7 @@ var ws_connected = blessed.Text({
 footer.append(commands);
 footer.append(ws_connected);
 
-var message_viewer = blessed.box({
+var message_viewer = blessed.textarea({
     label: 'Preview',
     left: '20%',
     top: 0,
@@ -139,7 +142,16 @@ var message_viewer = blessed.box({
         right: true,
         bottom: true
     },
-    content: ''
+    content: '',
+    scrollbar: {
+      ch: ' ',
+      track: {
+          bg: 'red'
+      },
+      style: {
+          inverse: true
+      }
+  }
 });
 
 message_list.focus();
@@ -276,6 +288,7 @@ screen.key('c', function(){
 
 screen.key('q', function () {
     ws.close();
+    screen.destroy();
     process.exit(0);
     return screen.destroy();
 });
@@ -289,17 +302,48 @@ screen.key('t', function () {
             "cccc": "DDD"
         },
         "number": 400,
-        "floating": 4.555
+        "floating": 4.555,
+        "blah2": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah3": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah4": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah5": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah6": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah7": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah8": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah9": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah10": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        },"blah11": {
+          "aaa": "bbb",
+          "cccc": "DDD"
+        }
     }
 
     add_message(JSON.stringify(test_message));
 });
 
 
-
-
 process.on('SIGTERM', function () {
     console.info("Shutting down UI");
+    ws.close();
+    screen.destroy();
     process.exit(0);
 });
 
