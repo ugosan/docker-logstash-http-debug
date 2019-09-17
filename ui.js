@@ -14,19 +14,17 @@ const color_config = {
     'number': chalk.magenta
 }
 
+var LIST_ITEM_ID = "@timestamp"
+var MAX_MESSAGES = 100;
 
-
-const MAX_MESSAGES = 100;
-
-var message_count = 0;
-var message_length_avg = 0;
-
-var messages_per_second = 0;
-var message_count_t0 = 0;
+var stats = {};
+stats.message_count = 0;
+stats.message_length_avg = 0;
+stats.messages_per_second = 0;
+stats.message_count_t0 = 0;
 
 screen = blessed.screen({
-    //dump: __dirname + '/log.txt',
-    fastCSR: true,
+    smartCSR: true,
     autoPadding: true,
     warnings: true,
     dockBorders: true,
@@ -81,7 +79,7 @@ var progress = blessed.progressbar({
     filled: 0
 });
 
-var stats = blessed.box({
+var stats_box = blessed.box({
     label: 'Stats',
     border: 'line',
     bottom: 1,
@@ -112,7 +110,6 @@ var footer = blessed.box({
     }
 });
 
-//footer.append(progress);
 
 var commands = blessed.Text({
     left: 0,
@@ -135,6 +132,9 @@ var message_viewer = blessed.textarea({
     top: 0,
     width: '80%',
     height: '100%-4',
+    scrollable: true,
+    mouse: true,
+    keys: true,
     border: {
         type: 'line',
         left: true,
@@ -146,7 +146,7 @@ var message_viewer = blessed.textarea({
     scrollbar: {
       ch: ' ',
       track: {
-          bg: 'red'
+          bg: 'gray'
       },
       style: {
           inverse: true
@@ -159,26 +159,35 @@ message_list.select(0);
 
 var show_message = function (index) {
     if (messages.length > 0) {
-        var jsonmessage = JSON.parse(messages[index]);
-        message_viewer.content = emphasize.highlightAuto(JSON.stringify(jsonmessage, null, 2), color_config).value;
+        var msg = messages[index];
+
+        if(!msg.formatted){
+          //do the json pretty print, which is slow;
+          msg.formatted = emphasize.highlightAuto(JSON.stringify(msg.json, null, 2), color_config).value;
+        }
+        message_viewer.content = msg.formatted;
     }
 }
 
-var add_message = function (message) {
-
+async function add_message(message) {
+  return new Promise(resolve => {
     if (messages.length < MAX_MESSAGES) {
-        var jsonmessage = JSON.parse(message);
-        message_list.add(jsonmessage["@timestamp"] || "event " + message_list.items.length);
-        messages.push(message);
+      var msg = {};
+      msg.json = JSON.parse(message);
+      
+      message_list.add(msg.json[LIST_ITEM_ID] || "event " + message_list.items.length);
+      messages.push(msg);
 
-        if (messages.length == 1) show_message(message_list.getScroll());
+      if (messages.length == 1) show_message(message_list.getScroll());
     }
-    message_count++;
+    stats.message_count++;
+    resolve(stats.message_count);
+  });
 
 }
 
 var update_progress = function () {
-    progress.setLabel(messages.length + "/" + message_count);
+    progress.setLabel(messages.length + "/" + stats.message_count);
     progress.filled = messages.length * 100 / MAX_MESSAGES;
 
     if (messages.length >= MAX_MESSAGES) progress.style.bar.fg = 'white'
@@ -189,6 +198,11 @@ message_list.on('keypress', function (ch, key) {
     if (key.name === 'up' || key.name === 'down') {
         show_message(message_list.getScroll());
     } 
+
+    if (key.name === 'right') {
+      message_viewer.focus();
+  } 
+
 });
 
 message_list.on('select', function () {
@@ -201,7 +215,7 @@ message_list.on('click', function () {
 
 screen.append(message_list);
 screen.append(message_viewer);
-screen.append(stats);
+screen.append(stats_box);
 screen.append(progress);
 screen.append(footer);
 
@@ -274,10 +288,13 @@ screen.key('s', function () {
 });
 
 screen.key('r', function () {
-    message_count = 0;
-    message_length_avg = 0;
-    messages_per_second = 0;
-    message_count_t0 = 0;
+    message_list.clearItems();
+    stats.message_count = 0;
+    stats.message_length_avg = 0;
+    stats.messages_per_second = 0;
+    stats.message_count_t0 = 0;
+    messages = [];
+    message_viewer.content = "";
 });
 
 screen.key('c', function(){
@@ -293,6 +310,14 @@ screen.key('q', function () {
     return screen.destroy();
 });
 
+message_viewer.key('tab',function () {
+  message_list.focus();
+});
+
+message_list.key('tab',function () {
+  message_viewer.focus();
+});
+
 screen.key('t', function () {
     var test_message = {
         "@timestamp": new Date().toISOString(),
@@ -304,10 +329,10 @@ screen.key('t', function () {
         "number": 400,
         "floating": 4.555,
         "blah2": {
-          "aaa": "bbb",
+          "aaa": "ááá",
           "cccc": "DDD"
         },"blah3": {
-          "aaa": "bbb",
+          "aaa": "👍",
           "cccc": "DDD"
         },"blah4": {
           "aaa": "bbb",
@@ -377,19 +402,17 @@ ws.on('close', function open() {
 
 ws.on('message', function incoming(message) {
     add_message(message);
-    message_length_avg = Buffer.from(message).length;
+    stats.message_length_avg = Buffer.from(message).length/messages.length;
 });
 
 setInterval(function () {
     screen.render();
-}, 300);
+}, 200);
 
 setInterval(function(){
     update_progress();
 
-    messages_per_second = message_count - message_count_t0;
-
-    stats.content = `{bold} ${message_length_avg} {/bold} bytes avg \t {bold}${messages_per_second}{/bold} eps \t {bold}${humanize(messages_per_second*message_length_avg)}{/bold}/s`;
-
-    message_count_t0 = message_count;
+    stats.messages_per_second = stats.message_count - stats.message_count_t0;
+    stats_box.content = `{bold} ${stats.message_length_avg} {/bold} bytes avg \t {bold}${stats.messages_per_second}{/bold} eps \t {bold}${humanize(stats.messages_per_second*stats.message_length_avg)}{/bold}/s`;
+    stats.message_count_t0 = stats.message_count;
 }, 1000);
