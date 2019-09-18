@@ -11,10 +11,13 @@ var messages = [];
 const color_config = {
     'attr': chalk.blue,
     'string': chalk.white,
-    'number': chalk.magenta,
-    'elastic_pink': "#e93186"
+    'number': chalk.magenta
 }
 
+const ui_theme = {
+  'highlight': "#bc034d",
+  'button': "#0378bc"
+}
 
 var KEY_FIELD = "@timestamp"
 var MAX_MESSAGES = 100;
@@ -54,7 +57,7 @@ var message_list = blessed.list({
     mouse: true,
     style: {
         selected: {
-            bg: color_config.elastic_pink
+            bg: ui_theme.highlight
         }
     },
     border: {
@@ -64,7 +67,7 @@ var message_list = blessed.list({
     scrollbar: {
         ch: ' ',
         track: {
-            bg: color_config.elastic_pink
+            bg: ui_theme.highlight
         },
         style: {
             inverse: true
@@ -170,7 +173,7 @@ var show_message = function (index) {
           //do the json pretty print, which is kind of slow;
           msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), color_config).value;
         }
-        message_viewer.content = msg.formatted;
+        message_viewer.setContent(msg.formatted);
     }
 }
 
@@ -343,7 +346,7 @@ var form_input_key_field = blessed.textbox(
 )
 
 form_input_key_field.on('focus', function(){
-  form_input_key_field.style.bg = color_config.elastic_pink;
+  form_input_key_field.style.bg = ui_theme.highlight;
   form_input_key_field.enableInput();
 });
 
@@ -352,7 +355,7 @@ form_input_key_field.on('blur', function(){
 });
 
 form_input_max_messages.on('focus', function(){
-  form_input_max_messages.style.bg = color_config.elastic_pink;
+  form_input_max_messages.style.bg = ui_theme.highlight;
 });
 
 form_input_max_messages.on('blur', function(){
@@ -375,16 +378,16 @@ var submit = blessed.button({
   border: {
     type: "line",
     fg: "white",
-    bg: "#6d0625"
+    bg: ui_theme.button
   },
   style: {
-    bg: '#6d0625',
+    bg: ui_theme.button,
     fg: 'white',
     focus: {
-      bg: color_config.elastic_pink
+      bg: ui_theme.highlight
     },
     hover: {
-      bg: color_config.elastic_pink
+      bg: ui_theme.highlight
     }
   }
 });
@@ -406,16 +409,16 @@ var cancel = blessed.button({
   border: {
     type: "line",
     fg: "white",
-    bg: "#6d0625"
+    bg: ui_theme.button
   },
   style: {
-    bg: '#6d0625',
+    bg: ui_theme.button,
     fg: 'white',
     focus: {
-      bg: color_config.elastic_pink
+      bg: ui_theme.highlight
     },
     hover: {
-      bg: color_config.elastic_pink
+      bg: ui_theme.highlight
     }
   }
 });
