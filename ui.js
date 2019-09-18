@@ -11,8 +11,10 @@ var messages = [];
 const color_config = {
     'attr': chalk.blue,
     'string': chalk.white,
-    'number': chalk.magenta
+    'number': chalk.magenta,
+    'elastic_pink': "#e93186"
 }
+
 
 var KEY_FIELD = "@timestamp"
 var MAX_MESSAGES = 100;
@@ -52,7 +54,7 @@ var message_list = blessed.list({
     mouse: true,
     style: {
         selected: {
-            bg: 'red'
+            bg: color_config.elastic_pink
         }
     },
     border: {
@@ -62,7 +64,7 @@ var message_list = blessed.list({
     scrollbar: {
         ch: ' ',
         track: {
-            bg: 'red'
+            bg: color_config.elastic_pink
         },
         style: {
             inverse: true
@@ -111,8 +113,6 @@ var footer = blessed.box({
     width: '100%',
     height: 1,
     style: {
-        fg: 'white',
-        bg: 'black',
         border: {
             fg: '#f0f0f0'
         }
@@ -248,7 +248,7 @@ var prompt = blessed.box({
     shadow: true,
     left: 'center',
     top: 'center',
-    width: '50%',
+    width: '70%',
     height: '30%',
     border: 'line',
     draggable: true,
@@ -262,8 +262,7 @@ var form = blessed.form({
   left: 0,
   top: 0,
   width: "100%-2",
-  height: "100%-2",
-  bg: 'black'
+  height: "100%-2"
 });
 
 var form_wrapper_max_messages = blessed.box(
@@ -287,8 +286,7 @@ var form_label_max_messages = blessed.text(
     keys: false,
     focusable: false,
     shrink: true,
-    left: 0,
-    bg: 'black'
+    left: 0
   }
 )
 
@@ -300,7 +298,6 @@ var form_input_max_messages = blessed.textbox(
     width: "80%",
     inputOnFocus: true,
     right: 0,
-    bg: 'black',
     underline: true
   }
 )
@@ -325,8 +322,7 @@ var form_label_key_field = blessed.text(
     keys: false,
     focusable: false,
     shrink: true,
-    left: 0,
-    bg: 'black'
+    left: 0
   }
 )
 
@@ -342,13 +338,12 @@ var form_input_key_field = blessed.textbox(
     },
     inputOnFocus: true,
     right: 0,
-    bg: 'black',
     underline: true
   }
 )
 
 form_input_key_field.on('focus', function(){
-  form_input_key_field.style.bg = 'red';
+  form_input_key_field.style.bg = color_config.elastic_pink;
   form_input_key_field.enableInput();
 });
 
@@ -357,7 +352,7 @@ form_input_key_field.on('blur', function(){
 });
 
 form_input_max_messages.on('focus', function(){
-  form_input_max_messages.style.bg = 'red';
+  form_input_max_messages.style.bg = color_config.elastic_pink;
 });
 
 form_input_max_messages.on('blur', function(){
@@ -384,11 +379,12 @@ var submit = blessed.button({
   },
   style: {
     bg: '#6d0625',
+    fg: 'white',
     focus: {
-      bg: 'red'
+      bg: color_config.elastic_pink
     },
     hover: {
-      bg: 'red'
+      bg: color_config.elastic_pink
     }
   }
 });
@@ -414,11 +410,12 @@ var cancel = blessed.button({
   },
   style: {
     bg: '#6d0625',
+    fg: 'white',
     focus: {
-      bg: 'red'
+      bg: color_config.elastic_pink
     },
     hover: {
-      bg: 'red'
+      bg: color_config.elastic_pink
     }
   }
 });
