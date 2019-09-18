@@ -14,7 +14,7 @@ const color_config = {
     'number': chalk.magenta
 }
 
-var LIST_ITEM_ID = "@timestamp"
+var KEY_FIELD = "@timestamp"
 var MAX_MESSAGES = 100;
 
 var stats = {};
@@ -24,11 +24,19 @@ stats.messages_per_second = 0;
 stats.message_count_t0 = 0;
 
 screen = blessed.screen({
+    log: __dirname + '/console.log',
     smartCSR: true,
     autoPadding: true,
     warnings: true,
     dockBorders: true,
-    title: "Logstash Debug"
+    fullUnicode: true,
+    title: "Logstash Debug",
+    cursor: {
+      artificial: true,
+      shape: 'line',
+      blink: true,
+      color: null // null for default
+    }
 });
 
 var message_list = blessed.list({
@@ -37,7 +45,7 @@ var message_list = blessed.list({
     left: 'left',
     width: '20%',
     height: '100%-4',
-    border: 'line',
+    
     tags: true,
     keys: true,
     vi: true,
@@ -46,6 +54,10 @@ var message_list = blessed.list({
         selected: {
             bg: 'red'
         }
+    },
+    border: {
+      type: "line",
+      fg: 'gray'
     },
     scrollbar: {
         ch: ' ',
@@ -65,11 +77,11 @@ var progress = blessed.progressbar({
         bar: {
             bg: 'default',
             fg: 'blue'
-        },
-        border: {
-            fg: 'default',
-            bg: 'default'
         }
+    },
+    border: {
+      type: "line",
+      fg: 'gray'
     },
     ch: ':',
     width: '20%',
@@ -87,13 +99,10 @@ var stats_box = blessed.box({
     width: '80%',
     height: 3,
     tags: true,
-    style: {
-        fg: 'white',
-        bg: 'black',
-        border: {
-            fg: '#f0f0f0'
-        }
-    }
+    border: {
+      type: "line",
+      fg: 'gray'
+    },
 });
 
 var footer = blessed.box({
@@ -136,11 +145,8 @@ var message_viewer = blessed.textarea({
     mouse: true,
     keys: true,
     border: {
-        type: 'line',
-        left: true,
-        top: true,
-        right: true,
-        bottom: true
+      type: "line",
+      fg: "gray"
     },
     content: '',
     scrollbar: {
@@ -154,8 +160,7 @@ var message_viewer = blessed.textarea({
   }
 });
 
-message_list.focus();
-message_list.select(0);
+
 
 var show_message = function (index) {
     if (messages.length > 0) {
@@ -175,7 +180,7 @@ async function add_message(message) {
       var msg = {};
       msg.json = JSON.parse(message);
       
-      message_list.add(msg.json[LIST_ITEM_ID] || "event " + message_list.items.length);
+      message_list.add(msg.json[KEY_FIELD] || "event " + message_list.items.length);
       messages.push(msg);
 
       if (messages.length == 1) show_message(message_list.getScroll());
@@ -213,12 +218,30 @@ message_list.on('click', function () {
     show_message(message_list.getScroll());
 });
 
+message_list.on('focus', function(){
+  message_list.style.border.fg = 'white';
+});
+
+message_list.on('blur', function(){
+  message_list.style.border.fg = 'gray';
+});
+
+message_viewer.on('focus', function(){
+  message_viewer.style.border.fg = 'white';
+});
+
+message_viewer.on('blur', function(){
+  message_viewer.style.border.fg = 'gray';
+});
+
 screen.append(message_list);
 screen.append(message_viewer);
 screen.append(stats_box);
 screen.append(progress);
 screen.append(footer);
 
+message_list.focus();
+message_list.select(0);
 
 var prompt = blessed.box({
     parent: screen,
@@ -226,65 +249,215 @@ var prompt = blessed.box({
     left: 'center',
     top: 'center',
     width: '50%',
-    height: '50%',
-    style: {
-        bg: 'red',
-        transparent: false
-    },
+    height: '30%',
     border: 'line',
     draggable: true,
     label: 'Settings',
     hidden: true
 });
 
-var set = blessed.radioset({
-    parent: prompt,
-    left: 1,
-    top: 1,
-    shrink: true,
-    //padding: 1,
-    //content: 'f',
-    style: {
-        bg: 'magenta'
-    }
+var form = blessed.form({
+  parent: prompt,
+  keys: true,
+  left: 0,
+  top: 0,
+  width: "100%-2",
+  height: "100%-2",
+  bg: 'black'
 });
 
-blessed.radiobutton({
-    parent: set,
-    mouse: true,
-    keys: true,
-    shrink: true,
-    style: {
-        bg: 'magenta'
-    },
+var form_wrapper_max_messages = blessed.box(
+  {
+    top: 2,
+    parent: form,
+    width: "100%-2",
     height: 1,
+    mouse: false,
+    keys: false,
+    focusable: false
+  }
+)
+
+var form_label_max_messages = blessed.text(
+  {
+    parent: form_wrapper_max_messages,
+    width: "20%",
+    label: "Max messages: ",
+    mouse: false,
+    keys: false,
+    focusable: false,
+    shrink: true,
     left: 0,
-    top: 0,
-    name: 'radio1',
-    content: 'radio1'
+    bg: 'black'
+  }
+)
+
+var form_input_max_messages = blessed.textbox(
+  {
+    parent: form_wrapper_max_messages,
+    name: "MAX_MESSAGES",
+    value: ""+MAX_MESSAGES,
+    width: "80%",
+    inputOnFocus: true,
+    right: 0,
+    bg: 'black',
+    underline: true
+  }
+)
+
+
+var form_wrapper_key_field = blessed.box(
+  {
+    top: 5,
+    parent: form,
+    width: "100%-2",
+    height: 1
+    
+  }
+)
+
+var form_label_key_field = blessed.text(
+  {
+    parent: form_wrapper_key_field,
+    width: "20%",
+    label: "Key field: ",
+    mouse: false,
+    keys: false,
+    focusable: false,
+    shrink: true,
+    left: 0,
+    bg: 'black'
+  }
+)
+
+var form_input_key_field = blessed.textbox(
+  {
+    parent: form_wrapper_key_field,
+    name: "KEY_FIELD",
+    value: ""+KEY_FIELD,
+    width: "80%",
+    cursor: {
+      shape: "block",
+      blink: true
+    },
+    inputOnFocus: true,
+    right: 0,
+    bg: 'black',
+    underline: true
+  }
+)
+
+form_input_key_field.on('focus', function(){
+  form_input_key_field.style.bg = 'red';
+  form_input_key_field.enableInput();
 });
 
-blessed.textbox({
-    parent: prompt,
-    mouse: true,
-    keys: true,
-    style: {
-        bg: 'blue'
-    },
-    height: 1,
-    width: 20,
-    left: 1,
-    top: 3,
-    name: 'text'
+form_input_key_field.on('blur', function(){
+  form_input_key_field.style.bg = 'black';
 });
+
+form_input_max_messages.on('focus', function(){
+  form_input_max_messages.style.bg = 'red';
+});
+
+form_input_max_messages.on('blur', function(){
+  form_input_max_messages.style.bg = 'black';
+});
+
+var submit = blessed.button({
+  parent: form,
+  mouse: true,
+  keys: true,
+  shrink: true,
+  padding: {
+    left: 1,
+    right: 1
+  },
+  left: "50%-10",
+  bottom: 2,
+  name: 'submit',
+  content: 'ok',
+  border: {
+    type: "line",
+    fg: "white",
+    bg: "#6d0625"
+  },
+  style: {
+    bg: '#6d0625',
+    focus: {
+      bg: 'red'
+    },
+    hover: {
+      bg: 'red'
+    }
+  }
+});
+
+var cancel = blessed.button({
+  parent: form,
+  mouse: true,
+  keys: true,
+  shrink: true,
+  padding: {
+    left: 1,
+    right: 1
+  },
+  left: "50%",
+  bottom: 2,
+  shrink: true,
+  name: 'cancel',
+  content: 'cancel',
+  border: {
+    type: "line",
+    fg: "white",
+    bg: "#6d0625"
+  },
+  style: {
+    bg: '#6d0625',
+    focus: {
+      bg: 'red'
+    },
+    hover: {
+      bg: 'red'
+    }
+  }
+});
+
+submit.on('press', function() {
+  form.submit();
+});
+
+form.on('submit', function(data){
+  screen.log(data);
+  MAX_MESSAGES = data['MAX_MESSAGES'];
+  KEY_FIELD = data['KEY_FIELD'];
+});
+
+cancel.on('press', function() {
+  //form.reset();s
+  prompt.hidden = !prompt.hidden;
+});
+
+form.on('submit', function(data) {
+  prompt.hidden = !prompt.hidden;
+});
+
+form.on('reset', function(data) {
+  prompt.hidden = !prompt.hidden;
+});
+
+
 
 screen.key('s', function () {
-    prompt.hidden = !prompt.hidden;
     if (prompt.hidden){
-        message_list.focus();
-    }else{
-        prompt.focus();
+        prompt.hidden = !prompt.hidden;
+        form.focus();
     }
+});
+
+screen.key('escape', function(){
+  prompt.hidden = true;
+  message_list.focus();
 });
 
 screen.key('r', function () {
@@ -310,13 +483,35 @@ screen.key('q', function () {
     return screen.destroy();
 });
 
-message_viewer.key('tab',function () {
-  message_list.focus();
+
+var form_focusable = {
+  "index": 0,
+  "items": [
+    form_input_max_messages,
+    form_input_key_field,
+    submit,
+    cancel
+  ]
+};
+
+var main_screen_focusable = [
+  message_list,
+  message_viewer
+]
+
+screen.key('tab',function () {
+  
+  if(!prompt.hidden){
+    
+    form.focus();
+  }else{
+    main_screen_focusable[0].focus();
+    main_screen_focusable.push(main_screen_focusable.shift());
+  }
+
 });
 
-message_list.key('tab',function () {
-  message_viewer.focus();
-});
+
 
 screen.key('t', function () {
     var test_message = {
