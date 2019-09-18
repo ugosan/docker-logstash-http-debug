@@ -167,8 +167,8 @@ var show_message = function (index) {
         var msg = messages[index];
 
         if(!msg.formatted){
-          //do the json pretty print, which is slow;
-          msg.formatted = emphasize.highlightAuto(JSON.stringify(msg.json, null, 2), color_config).value;
+          //do the json pretty print, which is kind of slow;
+          msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), color_config).value;
         }
         message_viewer.content = msg.formatted;
     }
@@ -179,6 +179,7 @@ async function add_message(message) {
     if (messages.length < MAX_MESSAGES) {
       var msg = {};
       msg.json = JSON.parse(message);
+      
       
       message_list.add(msg.json[KEY_FIELD] || "event " + message_list.items.length);
       messages.push(msg);
@@ -248,8 +249,8 @@ var prompt = blessed.box({
     shadow: true,
     left: 'center',
     top: 'center',
-    width: '70%',
-    height: '30%',
+    width: 60,
+    height: 17,
     border: 'line',
     draggable: true,
     label: 'Settings',
@@ -280,7 +281,7 @@ var form_wrapper_max_messages = blessed.box(
 var form_label_max_messages = blessed.text(
   {
     parent: form_wrapper_max_messages,
-    width: "20%",
+    width: "30%",
     label: "Max messages: ",
     mouse: false,
     keys: false,
@@ -295,13 +296,12 @@ var form_input_max_messages = blessed.textbox(
     parent: form_wrapper_max_messages,
     name: "MAX_MESSAGES",
     value: ""+MAX_MESSAGES,
-    width: "80%",
+    width: "70%",
     inputOnFocus: true,
     right: 0,
     underline: true
   }
 )
-
 
 var form_wrapper_key_field = blessed.box(
   {
@@ -316,7 +316,7 @@ var form_wrapper_key_field = blessed.box(
 var form_label_key_field = blessed.text(
   {
     parent: form_wrapper_key_field,
-    width: "20%",
+    width: "30%",
     label: "Key field: ",
     mouse: false,
     keys: false,
@@ -331,7 +331,7 @@ var form_input_key_field = blessed.textbox(
     parent: form_wrapper_key_field,
     name: "KEY_FIELD",
     value: ""+KEY_FIELD,
-    width: "80%",
+    width: "70%",
     cursor: {
       shape: "block",
       blink: true
@@ -447,7 +447,7 @@ form.on('reset', function(data) {
 
 screen.key('s', function () {
     if (prompt.hidden){
-        prompt.hidden = !prompt.hidden;
+        prompt.toggle();
         form.focus();
     }
 });
