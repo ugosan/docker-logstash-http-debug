@@ -15,8 +15,8 @@ const color_config = {
 }
 
 const ui_theme = {
-  'highlight': "#bc034d",
-  'button': "#0378bc"
+    'highlight': "#bc034d",
+    'button': "#0378bc"
 }
 
 var KEY_FIELD = "@timestamp"
@@ -37,11 +37,28 @@ screen = blessed.screen({
     fullUnicode: true,
     title: "Logstash Debug",
     cursor: {
-      artificial: true,
-      shape: 'line',
-      blink: true,
-      color: null // null for default
+        artificial: true,
+        shape: 'line',
+        blink: true,
+        color: null // null for default
     }
+});
+
+const ws = new WebSocket('ws://localhost:8081');
+
+ws.on('open', function open() {
+    ws_connected.content = "Connected: Yes";
+    screen.render();
+});
+
+ws.on('close', function open() {
+    ws_connected.content = "Connected: No";
+    screen.render();
+});
+
+ws.on('message', function incoming(message) {
+    add_message(message);
+    stats.message_length_avg = Buffer.from(message).length / messages.length;
 });
 
 var message_list = blessed.list({
@@ -50,7 +67,7 @@ var message_list = blessed.list({
     left: 'left',
     width: '20%',
     height: '100%-4',
-    
+
     tags: true,
     keys: true,
     vi: true,
@@ -61,8 +78,8 @@ var message_list = blessed.list({
         }
     },
     border: {
-      type: "line",
-      fg: 'gray'
+        type: "line",
+        fg: 'gray'
     },
     scrollbar: {
         ch: ' ',
@@ -85,8 +102,8 @@ var progress = blessed.progressbar({
         }
     },
     border: {
-      type: "line",
-      fg: 'gray'
+        type: "line",
+        fg: 'gray'
     },
     ch: ':',
     width: '20%',
@@ -105,8 +122,8 @@ var stats_box = blessed.box({
     height: 3,
     tags: true,
     border: {
-      type: "line",
-      fg: 'gray'
+        type: "line",
+        fg: 'gray'
     },
 });
 
@@ -122,12 +139,11 @@ var footer = blessed.box({
     }
 });
 
-
 var commands = blessed.Text({
     left: 0,
     top: 0,
     tags: true,
-    content: '{bold}q{/bold}uit | {bold}c{/bold}lear events | {bold}r{/bold}eset stats | {bold}s{/bold}ettings',
+    content: '{bold}q{/bold}uit | {bold}r{/bold}eset events | {bold}s{/bold}ettings',
 });
 var ws_connected = blessed.Text({
     right: 1,
@@ -148,50 +164,47 @@ var message_viewer = blessed.textarea({
     mouse: true,
     keys: true,
     border: {
-      type: "line",
-      fg: "gray"
+        type: "line",
+        fg: "gray"
     },
     content: '',
     scrollbar: {
-      ch: ' ',
-      track: {
-          bg: 'gray'
-      },
-      style: {
-          inverse: true
-      }
-  }
+        ch: ' ',
+        track: {
+            bg: 'gray'
+        },
+        style: {
+            inverse: true
+        }
+    }
 });
-
-
 
 var show_message = function (index) {
     if (messages.length > 0) {
         var msg = messages[index];
 
-        if(!msg.formatted){
-          //do the json pretty print, which is kind of slow;
-          msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), color_config).value;
+        if (!msg.formatted) {
+            //do the json pretty print, which is kind of slow;
+            msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), color_config).value;
         }
         message_viewer.setContent(msg.formatted);
     }
 }
 
 async function add_message(message) {
-  return new Promise(resolve => {
-    if (messages.length < MAX_MESSAGES) {
-      var msg = {};
-      msg.json = JSON.parse(message);
-      
-      
-      message_list.add(msg.json[KEY_FIELD] || "event " + message_list.items.length);
-      messages.push(msg);
+    return new Promise(resolve => {
+        if (messages.length < MAX_MESSAGES) {
+            var msg = {};
+            msg.json = JSON.parse(message);
 
-      if (messages.length == 1) show_message(message_list.getScroll());
-    }
-    stats.message_count++;
-    resolve(stats.message_count);
-  });
+            message_list.add(msg.json[KEY_FIELD] || "event " + message_list.items.length);
+            messages.push(msg);
+
+            if (messages.length == 1) show_message(message_list.getScroll());
+        }
+        stats.message_count++;
+        resolve(stats.message_count);
+    });
 
 }
 
@@ -206,12 +219,18 @@ var update_progress = function () {
 message_list.on('keypress', function (ch, key) {
     if (key.name === 'up' || key.name === 'down') {
         show_message(message_list.getScroll());
-    } 
+    }
 
     if (key.name === 'right') {
-      message_viewer.focus();
-  } 
+        message_viewer.focus();
+    }
 
+});
+
+message_viewer.on('keypress', function (ch, key) {
+    if (key.name === 'left') {
+        message_list.focus();
+    }
 });
 
 message_list.on('select', function () {
@@ -222,20 +241,20 @@ message_list.on('click', function () {
     show_message(message_list.getScroll());
 });
 
-message_list.on('focus', function(){
-  message_list.style.border.fg = 'white';
+message_list.on('focus', function () {
+    message_list.style.border.fg = 'white';
 });
 
-message_list.on('blur', function(){
-  message_list.style.border.fg = 'gray';
+message_list.on('blur', function () {
+    message_list.style.border.fg = 'gray';
 });
 
-message_viewer.on('focus', function(){
-  message_viewer.style.border.fg = 'white';
+message_viewer.on('focus', function () {
+    message_viewer.style.border.fg = 'white';
 });
 
-message_viewer.on('blur', function(){
-  message_viewer.style.border.fg = 'gray';
+message_viewer.on('blur', function () {
+    message_viewer.style.border.fg = 'gray';
 });
 
 screen.append(message_list);
@@ -261,16 +280,15 @@ var prompt = blessed.box({
 });
 
 var form = blessed.form({
-  parent: prompt,
-  keys: true,
-  left: 0,
-  top: 0,
-  width: "100%-2",
-  height: "100%-2"
+    parent: prompt,
+    keys: true,
+    left: 0,
+    top: 0,
+    width: "100%-2",
+    height: "100%-2"
 });
 
-var form_wrapper_max_messages = blessed.box(
-  {
+var form_wrapper_max_messages = blessed.box({
     top: 2,
     parent: form,
     width: "100%-2",
@@ -278,11 +296,9 @@ var form_wrapper_max_messages = blessed.box(
     mouse: false,
     keys: false,
     focusable: false
-  }
-)
+})
 
-var form_label_max_messages = blessed.text(
-  {
+var form_label_max_messages = blessed.text({
     parent: form_wrapper_max_messages,
     width: "30%",
     label: "Max messages: ",
@@ -291,33 +307,27 @@ var form_label_max_messages = blessed.text(
     focusable: false,
     shrink: true,
     left: 0
-  }
-)
+})
 
-var form_input_max_messages = blessed.textbox(
-  {
+var form_input_max_messages = blessed.textbox({
     parent: form_wrapper_max_messages,
     name: "MAX_MESSAGES",
-    value: ""+MAX_MESSAGES,
+    value: "" + MAX_MESSAGES,
     width: "70%",
     inputOnFocus: true,
     right: 0,
     underline: true
-  }
-)
+})
 
-var form_wrapper_key_field = blessed.box(
-  {
+var form_wrapper_key_field = blessed.box({
     top: 5,
     parent: form,
     width: "100%-2",
     height: 1
-    
-  }
-)
 
-var form_label_key_field = blessed.text(
-  {
+})
+
+var form_label_key_field = blessed.text({
     parent: form_wrapper_key_field,
     width: "30%",
     label: "Key field: ",
@@ -326,138 +336,137 @@ var form_label_key_field = blessed.text(
     focusable: false,
     shrink: true,
     left: 0
-  }
-)
+})
 
-var form_input_key_field = blessed.textbox(
-  {
+var form_input_key_field = blessed.textbox({
     parent: form_wrapper_key_field,
     name: "KEY_FIELD",
-    value: ""+KEY_FIELD,
+    value: "" + KEY_FIELD,
     width: "70%",
     cursor: {
-      shape: "block",
-      blink: true
+        shape: "block",
+        blink: true
     },
     inputOnFocus: true,
     right: 0,
     underline: true
-  }
-)
+})
 
-form_input_key_field.on('focus', function(){
-  form_input_key_field.style.bg = ui_theme.highlight;
-  form_input_key_field.enableInput();
+form_input_key_field.on('focus', function () {
+    form_input_key_field.style.bg = ui_theme.highlight;
+    form_input_key_field.enableInput();
 });
 
-form_input_key_field.on('blur', function(){
-  form_input_key_field.style.bg = 'black';
+form_input_key_field.on('blur', function () {
+    form_input_key_field.style.bg = 'black';
 });
 
-form_input_max_messages.on('focus', function(){
-  form_input_max_messages.style.bg = ui_theme.highlight;
+form_input_max_messages.on('focus', function () {
+    form_input_max_messages.style.bg = ui_theme.highlight;
 });
 
-form_input_max_messages.on('blur', function(){
-  form_input_max_messages.style.bg = 'black';
+form_input_max_messages.on('blur', function () {
+    form_input_max_messages.style.bg = 'black';
 });
 
 var submit = blessed.button({
-  parent: form,
-  mouse: true,
-  keys: true,
-  shrink: true,
-  padding: {
-    left: 1,
-    right: 1
-  },
-  left: "50%-10",
-  bottom: 2,
-  name: 'submit',
-  content: 'ok',
-  border: {
-    type: "line",
-    fg: "white",
-    bg: ui_theme.button
-  },
-  style: {
-    bg: ui_theme.button,
-    fg: 'white',
-    focus: {
-      bg: ui_theme.highlight
+    parent: form,
+    mouse: true,
+    keys: true,
+    shrink: true,
+    padding: {
+        left: 1,
+        right: 1
     },
-    hover: {
-      bg: ui_theme.highlight
+    left: "50%-10",
+    bottom: 2,
+    name: 'submit',
+    content: 'ok',
+    border: {
+        type: "line",
+        fg: "white",
+        bg: ui_theme.button
+    },
+    style: {
+        bg: ui_theme.button,
+        fg: 'white',
+        focus: {
+            bg: ui_theme.highlight
+        },
+        hover: {
+            bg: ui_theme.highlight
+        }
     }
-  }
 });
 
 var cancel = blessed.button({
-  parent: form,
-  mouse: true,
-  keys: true,
-  shrink: true,
-  padding: {
-    left: 1,
-    right: 1
-  },
-  left: "50%",
-  bottom: 2,
-  shrink: true,
-  name: 'cancel',
-  content: 'cancel',
-  border: {
-    type: "line",
-    fg: "white",
-    bg: ui_theme.button
-  },
-  style: {
-    bg: ui_theme.button,
-    fg: 'white',
-    focus: {
-      bg: ui_theme.highlight
+    parent: form,
+    mouse: true,
+    keys: true,
+    shrink: true,
+    padding: {
+        left: 1,
+        right: 1
     },
-    hover: {
-      bg: ui_theme.highlight
+    left: "50%",
+    bottom: 2,
+    shrink: true,
+    name: 'cancel',
+    content: 'cancel',
+    border: {
+        type: "line",
+        fg: "white",
+        bg: ui_theme.button
+    },
+    style: {
+        bg: ui_theme.button,
+        fg: 'white',
+        focus: {
+            bg: ui_theme.highlight
+        },
+        hover: {
+            bg: ui_theme.highlight
+        }
     }
-  }
 });
 
-submit.on('press', function() {
-  form.submit();
+submit.on('press', function () {
+    form.submit();
+    message_list.focus();
 });
 
-form.on('submit', function(data){
-  screen.log(data);
-  MAX_MESSAGES = data['MAX_MESSAGES'];
-  KEY_FIELD = data['KEY_FIELD'];
+form.on('submit', function (data) {
+    screen.log(data);
+    MAX_MESSAGES = data['MAX_MESSAGES'];
+    KEY_FIELD = data['KEY_FIELD'];
 });
 
-cancel.on('press', function() {
-  //form.reset();s
-  prompt.hidden = !prompt.hidden;
+cancel.on('press', function () {
+    //form.reset();s
+    prompt.hidden = !prompt.hidden;
+    message_list.focus();
 });
 
-form.on('submit', function(data) {
-  prompt.hidden = !prompt.hidden;
+form.on('submit', function (data) {
+    prompt.hidden = !prompt.hidden;
+    message_list.focus();
 });
 
-form.on('reset', function(data) {
-  prompt.hidden = !prompt.hidden;
+form.on('reset', function (data) {
+    prompt.hidden = !prompt.hidden;
+    message_list.focus();
 });
-
-
 
 screen.key('s', function () {
-    if (prompt.hidden){
+    if (prompt.hidden) {
         prompt.toggle();
         form.focus();
     }
 });
 
-screen.key('escape', function(){
-  prompt.hidden = true;
-  message_list.focus();
+screen.key('escape', function () {
+    prompt.hidden = true;
+    message_list.focus();
 });
 
 screen.key('r', function () {
@@ -470,7 +479,7 @@ screen.key('r', function () {
     message_viewer.content = "";
 });
 
-screen.key('c', function(){
+screen.key('c', function () {
     message_list.clearItems();
     messages = [];
     message_viewer.content = "";
@@ -483,35 +492,32 @@ screen.key('q', function () {
     return screen.destroy();
 });
 
-
 var form_focusable = {
-  "index": 0,
-  "items": [
-    form_input_max_messages,
-    form_input_key_field,
-    submit,
-    cancel
-  ]
+    "index": 0,
+    "items": [
+        form_input_max_messages,
+        form_input_key_field,
+        submit,
+        cancel
+    ]
 };
 
 var main_screen_focusable = [
-  message_list,
-  message_viewer
+    message_list,
+    message_viewer
 ]
 
-screen.key('tab',function () {
-  
-  if(!prompt.hidden){
-    
-    form.focus();
-  }else{
-    main_screen_focusable[0].focus();
-    main_screen_focusable.push(main_screen_focusable.shift());
-  }
+screen.key('tab', function () {
+
+    if (!prompt.hidden) {
+
+        form.focus();
+    } else {
+        main_screen_focusable[0].focus();
+        main_screen_focusable.push(main_screen_focusable.shift());
+    }
 
 });
-
-
 
 screen.key('t', function () {
     var test_message = {
@@ -524,41 +530,49 @@ screen.key('t', function () {
         "number": 400,
         "floating": 4.555,
         "blah2": {
-          "aaa": "ááá",
-          "cccc": "DDD"
-        },"blah3": {
-          "aaa": "👍",
-          "cccc": "DDD"
-        },"blah4": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah5": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah6": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah7": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah8": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah9": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah10": {
-          "aaa": "bbb",
-          "cccc": "DDD"
-        },"blah11": {
-          "aaa": "bbb",
-          "cccc": "DDD"
+            "aaa": "ááá",
+            "cccc": "DDD"
+        },
+        "blah3": {
+            "aaa": "👍",
+            "cccc": "DDD"
+        },
+        "blah4": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah5": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah6": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah7": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah8": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah9": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah10": {
+            "aaa": "bbb",
+            "cccc": "DDD"
+        },
+        "blah11": {
+            "aaa": "bbb",
+            "cccc": "DDD"
         }
     }
 
     add_message(JSON.stringify(test_message));
 });
-
 
 process.on('SIGTERM', function () {
     console.info("Shutting down UI");
@@ -569,42 +583,27 @@ process.on('SIGTERM', function () {
 
 function humanize(bytes, si) {
     var thresh = si ? 1000 : 1024;
-    if(Math.abs(bytes) < thresh) {
+    if (Math.abs(bytes) < thresh) {
         return bytes + ' B';
     }
-    var units = si
-        ? ['kB','MB','GB','TB','PB','EB','ZB','YB']
-        : ['KiB','MiB','GiB','TiB','PiB','EiB','ZiB','YiB'];
+    var units = si ?
+        ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] :
+        ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     var u = -1;
     do {
         bytes /= thresh;
         ++u;
-    } while(Math.abs(bytes) >= thresh && u < units.length - 1);
-    return bytes.toFixed(1)+' '+units[u];
+    } while (Math.abs(bytes) >= thresh && u < units.length - 1);
+    return bytes.toFixed(1) + ' ' + units[u];
 }
 
-const ws = new WebSocket('ws://localhost:8081');
 
-ws.on('open', function open() {
-    ws_connected.content = "Connected: Yes";
-    screen.render();
-});
-
-ws.on('close', function open() {
-    ws_connected.content = "Connected: No";
-    screen.render();
-});
-
-ws.on('message', function incoming(message) {
-    add_message(message);
-    stats.message_length_avg = Buffer.from(message).length/messages.length;
-});
 
 setInterval(function () {
     screen.render();
 }, 200);
 
-setInterval(function(){
+setInterval(function () {
     update_progress();
 
     stats.messages_per_second = stats.message_count - stats.message_count_t0;
