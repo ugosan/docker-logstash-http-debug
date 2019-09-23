@@ -29,5 +29,5 @@ Step 3: Start the console
 docker exec -it logstash-debug /console.sh 
 ```
 
-<kbd>![](/doc/termtosvg_j07g3s7r.svg)</kbd>
+<kbd>![](/doc/termtosvg_n4dk2z59.svg)</kbd>
 
