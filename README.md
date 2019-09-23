@@ -10,16 +10,18 @@ This is a small docker image to help on coding pipelines for Logstash. It starts
 
 ### Step 1: Add or change the `output` of your pipeline:
 
-Use the name of the container as the domain (e.g. `logstash-debug`)
+Use `localhost` the name of the container (e.g. `logstash-debug`) as the url in case you are running Logstash inside docker as well.
+
 ```
 output {
     ...
     http {
-        url => "http://logstash-debug:9000"
+        url => "http://localhost:9000"
         http_method => "post"
     }
 }
 ```
+
 
 ### Step 2: Start the container
 Give it a very creative name such as `logstash-debug`:
