@@ -28,3 +28,9 @@ Step 3: Start the console
 ```
 docker exec -it logstash-debug /console.sh 
 ```
+
+<p align="center">
+    <kbd>
+    <img src="https://raw.githubusercontent.com/ugosan/docker-logstash-http-debug/master/doc/termtosvg_j07g3s7r.svg">
+    </kbd>
+</p>
