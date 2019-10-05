@@ -24,6 +24,7 @@ var MAX_MESSAGES = 100;
 
 var stats = {};
 stats.message_count = 0;
+stats.message_size_sum = 0;
 stats.message_length_avg = 0;
 stats.messages_per_second = 0;
 stats.message_count_t0 = 0;
@@ -48,17 +49,16 @@ const ws = new WebSocket('ws://localhost:8081');
 
 ws.on('open', function open() {
     ws_connected.content = "Connected: Yes";
-    screen.render();
 });
 
 ws.on('close', function open() {
     ws_connected.content = "Connected: No";
-    screen.render();
 });
 
 ws.on('message', function incoming(message) {
     add_message(message);
-    stats.message_length_avg = Buffer.from(message).length / messages.length;
+    stats.message_size_sum += Buffer.from(message).length; 
+    stats.message_length_avg = stats.message_size_sum / stats.message_count;
 });
 
 var message_list = blessed.list({
@@ -188,6 +188,7 @@ var show_message = function (index) {
             msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), color_config).value;
         }
         message_viewer.setContent(msg.formatted);
+        screen.render();
     }
 }
 
@@ -474,9 +475,10 @@ screen.key('r', function () {
     stats.message_count = 0;
     stats.message_length_avg = 0;
     stats.messages_per_second = 0;
+    stats.message_size_sum = 0;
     stats.message_count_t0 = 0;
     messages = [];
-    message_viewer.content = "";
+    message_viewer.setContent("");
 });
 
 screen.key('c', function () {
@@ -487,6 +489,9 @@ screen.key('c', function () {
 
 screen.key('q', function () {
     ws.close();
+    
+    screen.program.disableMouse();
+
     screen.destroy();
     process.exit(0);
     return screen.destroy();
@@ -577,6 +582,7 @@ screen.key('t', function () {
 process.on('SIGTERM', function () {
     console.info("Shutting down UI");
     ws.close();
+    screen.program.disableMouse();
     screen.destroy();
     process.exit(0);
 });
@@ -584,7 +590,7 @@ process.on('SIGTERM', function () {
 function humanize(bytes, si) {
     var thresh = si ? 1000 : 1024;
     if (Math.abs(bytes) < thresh) {
-        return bytes + ' B';
+        return bytes.toFixed(0) + ' B';
     }
     var units = si ?
         ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] :
@@ -597,16 +603,10 @@ function humanize(bytes, si) {
     return bytes.toFixed(1) + ' ' + units[u];
 }
 
-
-
-setInterval(function () {
-    screen.render();
-}, 200);
-
 setInterval(function () {
     update_progress();
 
     stats.messages_per_second = stats.message_count - stats.message_count_t0;
-    stats_box.content = `{bold} ${stats.message_length_avg} {/bold} bytes avg \t {bold}${stats.messages_per_second}{/bold} eps \t {bold}${humanize(stats.messages_per_second*stats.message_length_avg)}{/bold}/s`;
+    stats_box.content = ` {bold}${humanize(stats.message_length_avg)}{/bold} avg\t{bold}${stats.messages_per_second}{/bold} eps\t{bold}${humanize(stats.messages_per_second*stats.message_length_avg)}{/bold}/s`;
     stats.message_count_t0 = stats.message_count;
-}, 1000);
+}, 500);
