@@ -1,2 +1,2 @@
 #!/bin/sh
-node ui.js
+node ../client/ui.js

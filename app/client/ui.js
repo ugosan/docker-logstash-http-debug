@@ -2,21 +2,30 @@ var WebSocket = require('ws');
 
 var blessed = require('blessed'),
     screen;
+var flatten = require('./flatten');
 
 var emphasize = require('emphasize')
 var chalk = require('chalk')
 
 var messages = [];
 
-const color_config = {
-    'attr': chalk.blue,
-    'string': chalk.white,
-    'number': chalk.magenta
+const ui_colors = {
+    'green': '#93c90e',
+    'cyan': '#00bfb3',
+    'blue': '#00a9e5',
+    'magenta': '#df4998',
+    'yellow': 'fed10a'
 }
 
 const ui_theme = {
-    'highlight': "#bc034d",
-    'button': "#0378bc"
+    'highlight': ui_colors.magenta,
+    'button': ui_colors.blue
+}
+
+const json_color_config = {
+    'attr': chalk.hex(ui_colors.blue),
+    'string': chalk.white,
+    'number': chalk.hex(ui_colors.yellow)
 }
 
 var KEY_FIELD = "@timestamp"
@@ -180,16 +189,17 @@ var message_viewer = blessed.textarea({
 });
 
 var show_message = function (index) {
-    if (messages.length > 0) {
-        var msg = messages[index];
+    if (messages.length == 0) return;
+    
+    var msg = messages[index];
 
-        if (!msg.formatted) {
-            //do the json pretty print, which is kind of slow;
-            msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), color_config).value;
-        }
-        message_viewer.setContent(msg.formatted);
-        screen.render();
+    if (!msg.formatted) {
+        //do the json pretty print, which is kind of slow;
+        msg.formatted = emphasize.highlight('json', JSON.stringify(msg.json, null, 2), json_color_config).value;
+        //msg.formatted = emphasize.highlight('json', JSON.stringify(msg.flat, null, 2), color_config).value;
     }
+    message_viewer.setContent(msg.formatted);
+    screen.render();
 }
 
 async function add_message(message) {
@@ -197,8 +207,9 @@ async function add_message(message) {
         if (messages.length < MAX_MESSAGES) {
             var msg = {};
             msg.json = JSON.parse(message);
+            msg.flat = flatten.flatten(msg.json);
 
-            message_list.add(msg.json[KEY_FIELD] || "event " + message_list.items.length);
+            message_list.add(msg.flat[KEY_FIELD] || "event " + message_list.items.length);
             messages.push(msg);
 
             if (messages.length == 1) show_message(message_list.getScroll());
@@ -593,8 +604,8 @@ function humanize(bytes, si) {
         return bytes.toFixed(0) + ' B';
     }
     var units = si ?
-        ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] :
-        ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+        ['kB', 'MB', 'GB'] :
+        ['KiB', 'MiB', 'GiB'];
     var u = -1;
     do {
         bytes /= thresh;

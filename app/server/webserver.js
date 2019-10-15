@@ -34,6 +34,7 @@ var server = http.createServer(function (req, res) {
 
     res.end(body);
 });
+
 server.listen(9000);
 console.log('Server is accepting messages on port 9000');
 
