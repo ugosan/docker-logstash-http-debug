@@ -3,7 +3,10 @@
 This is a small docker image to help on coding pipelines for Logstash. It starts a webserver so you can `output` events to it, and provides a navigable console where you can inspect the pretty-printed events.
 
 
-<kbd>![](/doc/termtosvg_n4dk2z59.svg)</kbd>
+<video autoplay loop muted playsinline>
+    <source src="doc/logstash-http-debug.mp4" type="video/mp4">
+    <p>Your browser doesn't support this embedded video.</p>
+</video>
 
 
 ## Getting started
