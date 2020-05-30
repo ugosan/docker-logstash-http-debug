@@ -1,8 +1,7 @@
 # docker-logstash-http-debug
 
 This is a small docker image to help on coding pipelines for Logstash. It starts a webserver so you can `output` events to it, and provides a navigable console where you can inspect the pretty-printed events.
-
-![](./doc/logstash-http-debug.gif)
+<kbd>![](./doc/logstash-http-debug.gif)</kbd>
 
 
 ## Getting started
