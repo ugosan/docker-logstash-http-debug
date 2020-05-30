@@ -4,11 +4,6 @@ This is a small docker image to help on coding pipelines for Logstash. It starts
 
 ![](./doc/logstash-http-debug.gif)
 
-<video autoplay loop muted playsinline>
-    <source src="doc/logstash-http-debug.mp4" type="video/mp4">
-    <p>Your browser doesn't support this embedded video.</p>
-</video>
-
 
 ## Getting started
 
