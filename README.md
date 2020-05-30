@@ -2,6 +2,7 @@
 
 This is a small docker image to help on coding pipelines for Logstash. It starts a webserver so you can `output` events to it, and provides a navigable console where you can inspect the pretty-printed events.
 
+![](./doc/logstash-http-debug.gif)
 
 <video autoplay loop muted playsinline>
     <source src="doc/logstash-http-debug.mp4" type="video/mp4">
