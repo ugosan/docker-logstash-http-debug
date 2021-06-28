@@ -6,37 +6,34 @@ var wss = new WebSocketServer({
     port: 8081
 });
 
-var server = http.createServer(function (req, res) {
 
-    if (req.method == 'POST') {
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString(); 
+var express = require('express');
+var app = express();
+
+app.post('/', function (req, res) {
+
+    let data = '';
+    req.on('data', chunk => {
+        data += chunk;
+    })
+    req.on('end', () => {
+        wss.clients.forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(data);
+            }
         });
-        req.on('end', () => {
 
-            wss.clients.forEach(function each(client) {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(body);
-                }
-            });
-            res.end('ok');
+        res.end();
+    })
 
-        });
-    }
-
-    var body = 'ok';
-    var content_length = body.length;
-    res.writeHead(200, {
-        'Content-Length': content_length,
-        'Content-Type': 'text/plain'
-    });
-
-    res.end(body);
 });
 
-server.listen(9000);
-console.log('Server is accepting messages on port 9000');
+var server = app.listen(9000, function () {
+    var host = server.address().address
+    var port = server.address().port
+    
+    console.log("Server is listening at http://%s:%s", host, port)
+})
 
 process.on('SIGTERM', function () {
     console.info("\nShutting down Webserver...");

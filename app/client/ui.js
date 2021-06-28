@@ -40,6 +40,7 @@ stats.message_count_t0 = 0;
 
 screen = blessed.screen({
     log: __dirname + '/console.log',
+    debug: true,
     smartCSR: true,
     autoPadding: true,
     warnings: true,
@@ -48,9 +49,9 @@ screen = blessed.screen({
     title: "Logstash Debug",
     cursor: {
         artificial: true,
-        shape: 'line',
+        shape: 'block',
         blink: true,
-        color: null // null for default
+        color: ui_colors.yellow
     }
 });
 
@@ -65,7 +66,17 @@ ws.on('close', function open() {
 });
 
 ws.on('message', function incoming(message) {
-    add_message(message);
+    screen.debug(message);
+    var json_message = JSON.parse(message);
+    
+    if(json_message instanceof Array) {
+        for (var i = 0; i < json_message.length; i++) {
+            add_message(json_message[i]);
+        }
+    }else {
+        add_message(json_message);
+    }
+   
     stats.message_size_sum += Buffer.from(message).length; 
     stats.message_length_avg = stats.message_size_sum / stats.message_count;
 });
@@ -152,7 +163,7 @@ var commands = blessed.Text({
     left: 0,
     top: 0,
     tags: true,
-    content: '{bold}q{/bold}uit | {bold}r{/bold}eset events | {bold}s{/bold}ettings',
+    content: '{bold}q{/bold}uit | {bold}r{/bold}eset events | {bold}s{/bold}ettings | {bold}f{/bold}ormat | {bold}w{/bold}rite to file',
 });
 var ws_connected = blessed.Text({
     right: 1,
@@ -206,7 +217,7 @@ async function add_message(message) {
     return new Promise(resolve => {
         if (messages.length < MAX_MESSAGES) {
             var msg = {};
-            msg.json = JSON.parse(message);
+            msg.json = message;
             msg.flat = flatten.flatten(msg.json);
 
             message_list.add(msg.flat[KEY_FIELD] || "event " + message_list.items.length);
@@ -545,6 +556,8 @@ screen.key('t', function () {
         },
         "number": 400,
         "floating": 4.555,
+        "array": [1,2,3],
+        "array_strings": ["one", "two", "three"],
         "blah2": {
             "aaa": "ááá",
             "cccc": "DDD"
@@ -587,7 +600,7 @@ screen.key('t', function () {
         }
     }
 
-    add_message(JSON.stringify(test_message));
+    add_message(test_message);
 });
 
 process.on('SIGTERM', function () {
